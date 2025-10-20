@@ -83,7 +83,7 @@ _-
   <!-- Link 2 (Version Vèt) -->
 <div style="background:#0f0f0f; border:2px solid #00FF00; border-radius:10px; padding:15px 25px; box-shadow:0 0 12px #00FF00; min-width:250px; text-align:center;">
   <p style="color:#ffffff; font-family:sans-serif; margin-bottom:8px;">
-    🔗 <strong>Pairing Server 01</strong>
+    🔗 <strong>Pairing Server 02</strong>
   </p>
   <a href="https://mini-crash-pair-dawens.onrender.com/pair" target="_blank">
     <img src="https://img.shields.io/badge/PAIR_CODE_1-00FF00?style=for-the-badge&logo=matrix&logoColor=white&labelColor=0d0d0d"/>
