@@ -79,9 +79,18 @@ _-
       <img src="https://img.shields.io/badge/PAIR_CODE_1-F0AF35?style=for-the-badge&logo=matrix&logoColor=white&labelColor=0d0d0d"/>
     </a>
   </div>
+
+  <!-- Link 2 -->
+  <div style="background:#0f0f0f; border:2px solid #00FFFF; border-radius:10px; padding:15px 25px; box-shadow:0 0 12px #00ffff; min-width:250px; text-align:center;">
+    <p style="color:#ffffff; font-family:sans-serif; margin-bottom:8px;">
+      🔗 <strong>Pairing Server 01</strong>
+    </p>
+    <a href="https://mini-crash-pair-dawens.onrender.com/pair" target="_blank">
+      <img src="https://img.shields.io/badge/PAIR_CODE_1-F0AF35?style=for-the-badge&logo=matrix&logoColor=white&labelColor=0d0d0d"/>
+    </a>
+  </div>
   
 ---
-
 ## 📡 DEPLOYMENT SITES
 
 <p align="center">Deploy your <strong>MINI-JESUS-CRASH Bot</strong> with one click on your favorite hosting platforms.</p>
