@@ -7,7 +7,7 @@ function toBool(text, fault = 'true') {
 
 module.exports = {
   // SESSION & OWNER
-  SESSION_ID: process.env.SESSION_ID || "MINI-JESUS-CRASH~7Y8V0AKR#-0ovnsimnv5Vsc8OfJPN7g_XvWkyR3xSpn7IirW6DjQ",
+  SESSION_ID: process.env.SESSION_ID || "MINI-JESUS-CRASH~acNRnLIY#nkCCnh07LCJiYJgpVg56DANzdISd4BWq8RE-iEjfijE",
   OWNER_NUMBER: (process.env.OWNER_NUMBER || "50942241547") + "@s.whatsapp.net",
   OWNER_NAME: process.env.OWNER_NAME || "DAWENS BOY",
   DEV: (process.env.DEV || "50942241547") + "@s.whatsapp.net",
