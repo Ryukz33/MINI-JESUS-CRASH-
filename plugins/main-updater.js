@@ -7,7 +7,7 @@ const { setCommitHash, getCommitHash } = require('../data/updateDB');
 
 cmd({
     pattern: "update",
-    alias: ["upgrade", "sync"],
+    alias: ["upgrade", "sync","up"],
     react: '🆕',
     desc: "*UPDATE THE BOT TO THE LATEST VERSION.*",
     category: "menu",
@@ -19,7 +19,7 @@ cmd({
         await reply("*🔍 CHECKING FOR UPDATES...*");
 
         // Fetch the latest commit hash from GitHub
-        const { data: commitData } = await axios.get("https://api.github.com/repos/dawens8/MINI-JESUS-CRASH/commits/main");
+        const { data: commitData } = await axios.get("https://api.github.com/repos/DAWENS-BOY904/MINI-JESUS-CRASH-/commits/main");
         const latestCommitHash = commitData.sha;
 
         // Get the stored commit hash from the database
@@ -33,7 +33,7 @@ cmd({
 
         // Download the latest code
         const zipPath = path.join(__dirname, "latest.zip");
-        const { data: zipData } = await axios.get("https://github.com/dawens8/MINI-JESUS-CRASH/archive/main.zip", { responseType: "arraybuffer" });
+        const { data: zipData } = await axios.get("https://github.com/DAWENS-BOY904/MINI-JESUS-CRASH-/archive/main.zip", { responseType: "arraybuffer" });
         fs.writeFileSync(zipPath, zipData);
 
         // Extract ZIP file
