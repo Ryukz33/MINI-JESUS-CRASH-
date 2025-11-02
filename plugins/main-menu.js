@@ -40,8 +40,8 @@ cmd({
       // Mete moun nan cooldown
       menuCooldown.set(userJid, now);
     }
-      
-  try {
+
+    // --- Kò meni a kòmanse isit la ---
     const botName = config.BOT_NAME || 'MINI-JESUS-CRASH';
     const ownerName = config.OWNER_NAME || '𝐃𝐀𝐖𝐄𝐍𝐒 𝐁𝐎𝐘';
     const menuImage = config.MENU_IMAGE_URL || 'https://files.catbox.moe/x16nfd.png';
@@ -49,8 +49,7 @@ cmd({
     const prefix = config.PREFIX || '.';
     const mode = config.MODE || 'default';
 
-    
-// 1) Send the "You ready?" prompt and keep the message key
+    // 1) Send the "You ready?" prompt and keep the message key
     const promptMsg = await conn.sendMessage(from, {
       text: '⚠️ You ready? React (✅ / 👍) or reply "ready" within 30s to open the menu.'
     }, { quoted: mek });
@@ -182,7 +181,7 @@ cmd({
     try {
       loadingMsg = await conn.sendMessage(from, { text: `🖤 Loading...\n${stages[0]}` }, { quoted: promptMsg });
       for (let i = 1; i < stages.length; i++) {
-        await wait(500);
+        await new Promise(r => setTimeout(r, 500)); // wait(500)
         // Attempt to edit previous message; fall back to sending a new one if edit not supported
         try {
           await conn.sendMessage(from, { edit: loadingMsg.key, text: `🖤 Loading...\n${stages[i]}` });
@@ -191,7 +190,7 @@ cmd({
           loadingMsg = await conn.sendMessage(from, { text: `🖤 Loading...\n${stages[i]}` });
         }
       }
-      await wait(900);
+      await new Promise(r => setTimeout(r, 900));
       try {
         await conn.sendMessage(from, { edit: loadingMsg.key, text: `✅ Loading complete! Preparing menu...` });
       } catch (e) {
@@ -288,6 +287,9 @@ cmd({
     } catch (e) {
       console.error('⚠️ Audio send failed:', e.message);
     }
+
+    // Clear cooldown otomatikman apre 30s (separe pou asire li retire menm si gen erè pita)
+    if (!isOwner) setTimeout(() => menuCooldown.delete(userJid), 30000);
 
   } catch (e) {
     console.error('❌ Menu error:', e.message);
