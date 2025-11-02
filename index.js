@@ -97,8 +97,8 @@ async function loadSession() {
         console.log('[⏳] Loading creds data from SESSION_ID...');
         
         // Retire prefix si li egziste
-        const sessdata = config.SESSION_ID.startsWith('ANTAGONISTE~MD~') 
-            ? config.SESSION_ID.replace("ANTAGONISTE~MD~", "") 
+        const sessdata = config.SESSION_ID.startsWith('Ovl-MD_') 
+            ? config.SESSION_ID.replace("Ovl-MD_", "") 
             : config.SESSION_ID;
 
         // Dekode Base64
