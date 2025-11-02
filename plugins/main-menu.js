@@ -15,7 +15,7 @@ function toSmallCaps(str) {
 
 cmd({
   pattern: 'menu',
-  alias: ['allmenu', 'jesus'],
+  alias: ['allmenu', 'jesus','🥷🏻'],
   desc: 'Show command menu',
   category: 'menu',
   react: '📜',
@@ -36,6 +36,127 @@ cmd({
     const prefix = config.PREFIX || '.';
     const mode = config.MODE || 'default';
 
+    
+// 1) Send the "You ready?" prompt and keep the message key
+    const promptMsg = await conn.sendMessage(from, {
+      text: '⚠️ You ready? React (✅ / 👍) or reply "ready" within 30s to open the menu.'
+    }, { quoted: mek });
+
+    // 2) Wait for reaction OR for a text reply from same user within timeout
+    const waitForConfirmation = (timeoutMs = 30000) => new Promise((resolve) => {
+      let resolved = false;
+
+      // safe wrappers for adding/removing listeners supporting both .on/.off and .addListener/.removeListener
+      const attach = (ev, handler) => {
+        if (conn.ev && conn.ev.on) conn.ev.on(ev, handler);
+        else if (conn.on) conn.on(ev, handler);
+      };
+      const detach = (ev, handler) => {
+        try {
+          if (conn.ev && conn.ev.off) conn.ev.off(ev, handler);
+          else if (conn.ev && conn.ev.removeListener) conn.ev.removeListener(ev, handler);
+          else if (conn.removeListener) conn.removeListener(ev, handler);
+        } catch (e) { /* ignore */ }
+      };
+
+      // Reaction handler
+      const onReaction = (reaction) => {
+        try {
+          // reaction can be single object or array depending on event; normalize
+          const react = Array.isArray(reaction) ? reaction[0] : reaction;
+          if (!react) return;
+
+          const key = react.key;
+          const participantRaw = react.participant || react.author || '';
+          const participant = String(participantRaw).split(':')[0] || participantRaw || '';
+          // unify emoji/text
+          const emoji = react.text || react.reaction || react.emoji || '';
+          const reactionMsgIdMatches = key && key.remoteJid === from && key.id === promptMsg.key.id;
+
+          // Ensure the reaction is to our prompt
+          if (!reactionMsgIdMatches) return;
+
+          // Ensure the reaction is from the initiator (m.sender)
+          const initiatorJid = m.sender;
+          if (participant !== initiatorJid) return;
+
+          // Accept a set of emojis
+          const acceptedEmojis = ['✅', '👍', '😂', '❤️', '😹'];
+          const accepted = acceptedEmojis.includes(emoji) || emoji === '' || true; // fallback to true if emoji empty but participant match
+          if (accepted) {
+            cleanup();
+            resolved = true;
+            resolve({ by: 'reaction', who: participant, reaction: emoji });
+          }
+        } catch (e) { /* ignore */ }
+      };
+
+      // Messages.upsert handler for text replies
+      const onUpsert = (upsert) => {
+        try {
+          const payload = Array.isArray(upsert) ? upsert : [upsert];
+          for (const item of payload) {
+            const msgs = item.messages || item; // sometimes upsert is { messages: [...] }
+            const arr = Array.isArray(msgs) ? msgs : [msgs];
+            for (const msg of arr) {
+              if (!msg || !msg.key || !msg.message) continue;
+              // check if message is from same initiator
+              const fromInitiator = (msg.key.participant ? msg.key.participant === m.sender : msg.key.remoteJid === m.sender);
+              if (!fromInitiator) continue;
+
+              // If user quoted the prompt message, extendedTextMessage.contextInfo.stanzaId will match promptMsg.key.id
+              const ext = msg.message.extendedTextMessage;
+              const isReplyToPrompt = ext && ext.contextInfo && ext.contextInfo.stanzaId === promptMsg.key.id;
+
+              // Extract text content
+              const textBody = (msg.message.conversation || ext?.text || '').toString().toLowerCase();
+
+              const positive = ['👍🏻', 'wi', 'uii', 'yes', '✅', 'ok', '❤️'];
+              const matches = positive.some(p => textBody.includes(p));
+
+              if (isReplyToPrompt || matches) {
+                cleanup();
+                resolved = true;
+                resolve({ by: 'text', who: msg.key.participant || msg.key.remoteJid, text: textBody });
+                return;
+              }
+            }
+          }
+        } catch (e) { /* ignore */ }
+      };
+
+      // Cleanup function to remove listeners and timeout
+      const timeout = setTimeout(() => {
+        if (resolved) return;
+        cleanup();
+        resolve(null); // no confirmation
+      }, timeoutMs);
+
+      const cleanup = () => {
+        try { detach('messages.reaction', onReaction); } catch (e) {}
+        try { detach('messages.upsert', onUpsert); } catch (e) {}
+        clearTimeout(timeout);
+      };
+
+      // Attach listeners
+      attach('messages.reaction', onReaction);
+      attach('messages.upsert', onUpsert);
+    });
+
+    const confirmation = await waitForConfirmation(30000); // 30s
+
+    if (!confirmation) {
+      await conn.sendMessage(from, { text: '⏳ No reaction received. Menu cancelled.' }, { quoted: promptMsg });
+      return;
+    }
+
+    // Optionally react back to user's reaction for UX (requires Baileys support)
+    try {
+      // send a small reaction back on the prompt message if supported
+      await conn.sendMessage(from, { react: { text: '⚡', key: promptMsg.key } }).catch(()=>{});
+    } catch (_) { /* ignore */ }
+
+    // Loading animation stages (edit the same message if possible)
     const stages = [
       '⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜  0%',
       '🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜  10%',
@@ -44,22 +165,29 @@ cmd({
       '🟩🟩🟩🟩🟩🟩⬜⬜⬜⬜  75%',
       '🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩  100%'
     ];
-    let loadingMsg = await conn.sendMessage(from, { text: `🖤 Loading...\n${stages[0]}` }, { quoted: mek });
-
-    for (let i = 1; i < stages.length; i++) {
-      await new Promise(r => setTimeout(r, 500));
-      await conn.sendMessage(from, {
-        edit: loadingMsg.key,
-        text: `🖤 Loading...\n${stages[i]}`
-      });
+    let loadingMsg;
+    try {
+      loadingMsg = await conn.sendMessage(from, { text: `🖤 Loading...\n${stages[0]}` }, { quoted: promptMsg });
+      for (let i = 1; i < stages.length; i++) {
+        await wait(500);
+        // Attempt to edit previous message; fall back to sending a new one if edit not supported
+        try {
+          await conn.sendMessage(from, { edit: loadingMsg.key, text: `🖤 Loading...\n${stages[i]}` });
+        } catch (e) {
+          // if edit not supported, send new and update loadingMsg reference
+          loadingMsg = await conn.sendMessage(from, { text: `🖤 Loading...\n${stages[i]}` });
+        }
+      }
+      await wait(900);
+      try {
+        await conn.sendMessage(from, { edit: loadingMsg.key, text: `✅ Loading complete! Preparing menu...` });
+      } catch (e) {
+        loadingMsg = await conn.sendMessage(from, { text: `✅ Loading complete! Preparing menu...` });
+      }
+    } catch (e) {
+      console.warn('Loading animation failed, continuing...', e?.message || e);
     }
-
-    await new Promise(r => setTimeout(r, 900));
-    await conn.sendMessage(from, {
-      edit: loadingMsg.key,
-      text: `✅ Loading complete! Preparing menu...`
-    });
-
+    
     // Group commands by category
     const grouped = {};
     for (const plugin of commands) {
