@@ -7,7 +7,7 @@ const { runtime } = require('../lib/functions');
 
 cmd({
   pattern: 'version',
-  alias: ["changelog", "cupdate", "checkupdate"],
+  alias: ["changelog", "?", "checkupdate"],
   react: '🚀',
   desc: "Check bot's version, system stats, and update info.",
   category: 'utility',
@@ -27,7 +27,7 @@ cmd({
     }
 
     // Fetch latest version data from GitHub
-    const rawVersionUrl = 'https://raw.githubusercontent.com/dawens8/MINI-JESUS-CRASH/main/data/version.json';
+    const rawVersionUrl = 'https://raw.githubusercontent.com/DAWENS-BOY904/MINI-JESUS-CRASH-/main/data/version.json';
     let latestVersion = 'Unknown';
     let latestChangelog = 'No changelog available.';
     try {
@@ -53,7 +53,7 @@ cmd({
     const lastUpdate = fs.statSync(localVersionPath).mtime.toLocaleString();
 
     // GitHub stats
-    const githubRepo = 'https://github.com/dawens8/MINI-JESUS-CRASH';
+    const githubRepo = 'https://github.com/DAWENS-BOY904/MINI-JESUS-CRASH-';
 
     // Check update status
     let updateMessage = `✅ Your MINI JESUS CRASH bot is up-to-date!`;
@@ -69,7 +69,7 @@ Use *.update* to update.`;
       `📌 *Bot Name:* MINI JESUS CRASH\n🔖 *Current Version:* ${localVersion}\n📢 *Latest Version:* ${latestVersion}\n📂 *Total Plugins:* ${pluginCount}\n🔢 *Total Commands:* ${totalCommands}\n\n` +
       `💾 *System Info:*\n⏳ *Uptime:* ${uptime}\n📟 *RAM Usage:* ${ramUsage}MB / ${totalRam}MB\n⚙️ *Host Name:* ${hostName}\n📅 *Last Update:* ${lastUpdate}\n\n` +
       `📝 *Changelog:*\n${latestChangelog}\n\n` +
-      `⭐ *GitHub Repo:* ${githubRepo}\n👤 *Owner:* [dawens8](https://github.com/dawens8)\n\n${updateMessage}\n\n🚀 *Hey! Don't forget to fork & star the repo!*`;
+      `⭐ *GitHub Repo:* ${githubRepo}\n👤 *Owner:* [DAWENS-BOY904](https://github.com/DAWENS-BOY904)\n\n${updateMessage}\n\n🚀 *Hey! Don't forget to fork & star the repo!*`;
 
     // Send the status message with an image
     await conn.sendMessage(from, {
