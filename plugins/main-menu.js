@@ -13,6 +13,9 @@ function toSmallCaps(str) {
   return str.toUpperCase().split('').map(c => smallCaps[c] || c).join('');
 }
 
+// Map pou kenbe cooldown pou moun ki pa owner
+const menuCooldown = new Map();
+
 cmd({
   pattern: 'menu',
   alias: ['allmenu', 'jesus','🥷🏻'],
@@ -24,7 +27,20 @@ cmd({
 
   // ✅ Fonction reply
   const reply = (text) => conn.sendMessage(from, { text }, { quoted: mek });
-  
+  const userJid = m.sender;
+
+  try {
+    // ✅ Check cooldown pou non-owner
+    if (!isOwner) {
+      const lastUsed = menuCooldown.get(userJid);
+      const now = Date.now();
+      if (lastUsed && (now - lastUsed) < 30000) { // 30 segonn cooldown
+        return reply(`⚠️ ${pushname || 'User'}, ou deja louvri menu a. Tanpri tann yon ti moman avan ou itilize li ankò.`);
+      }
+      // Mete moun nan cooldown
+      menuCooldown.set(userJid, now);
+    }
+      
   try {
     const botName = config.BOT_NAME || 'MINI-JESUS-CRASH';
     const ownerName = config.OWNER_NAME || '𝐃𝐀𝐖𝐄𝐍𝐒 𝐁𝐎𝐘';
